@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/widgets/device_card.dart';
 import '../ac/ac_screen.dart';
-
+import '../bluetooth/bluetooth_screen.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -55,7 +55,14 @@ class HomeScreen extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () {},
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const BluetoothScreen(),
+      ),
+    );
+  },
                 icon: const Icon(Icons.add),
                 label: const Text("Add Device"),
               ),

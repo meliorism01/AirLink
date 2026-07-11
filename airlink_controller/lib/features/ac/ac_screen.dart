@@ -12,13 +12,12 @@ class ACScreen extends StatefulWidget {
 
 class _ACScreenState extends State<ACScreen> {
   bool power = true;
-  bool swing = false;
+bool swing = false;
 
-  int temperature = 24;
+int temperature = 24;
 
-  String mode = "COOL";
-  String fanSpeed = "AUTO";
-
+String mode = "COOL";
+String fanSpeed = "AUTO";
   // ----------------------------
   // Dynamic Icon
   // ----------------------------
