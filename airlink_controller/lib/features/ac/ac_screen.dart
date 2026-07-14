@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../shared/widgets/control_card.dart';
 import '../../shared/widgets/temperature_control.dart';
 import '../../shared/widgets/segment_selector.dart';
+import '../../services/bluetooth_service.dart';
 
 class ACScreen extends StatefulWidget {
   const ACScreen({super.key});
@@ -13,6 +14,7 @@ class ACScreen extends StatefulWidget {
 class _ACScreenState extends State<ACScreen> {
   bool power = true;
 bool swing = false;
+final bluetoothService = AirLinkBluetoothService();
 
 int temperature = 24;
 
@@ -105,28 +107,42 @@ String fanSpeed = "AUTO";
     Row(
       children: [
         ControlCard(
-          icon: power
-              ? Icons.power_settings_new
-              : Icons.power_off,
-          title: power ? "Power ON" : "Power OFF",
-          selected: power,
-          onTap: () {
-            setState(() {
-              power = !power;
-            });
-          },
-        ),
+  icon: power
+      ? Icons.power_settings_new
+      : Icons.power_off,
+  title: power ? "Power ON" : "Power OFF",
+  selected: power,
+  onTap: () async {
 
-        ControlCard(
-          icon: Icons.swap_vert,
-          title: "Swing",
-          selected: swing,
-          onTap: () {
-            setState(() {
-              swing = !swing;
-            });
-          },
-        ),
+    if (power) {
+      await bluetoothService.sendCommand("POWER:OFF");
+    } else {
+      await bluetoothService.sendCommand("POWER:ON");
+    }
+
+    setState(() {
+      power = !power;
+    });
+  },
+),
+       ControlCard(
+  icon: Icons.swap_vert,
+  title: "Swing",
+  selected: swing,
+  onTap: () async {
+
+    await bluetoothService.sendCommand(
+      swing
+          ? "SWING:OFF"
+          : "SWING:ON",
+    );
+
+    setState(() {
+      swing = !swing;
+    });
+
+  },
+),
       ],
     ),
 
@@ -153,57 +169,88 @@ String fanSpeed = "AUTO";
 
               const SizedBox(height: 30),
 
-              TemperatureControl(
-                temperature: temperature,
-                onIncrease: () {
-                  if (temperature < 30) {
-                    setState(() {
-                      temperature++;
-                    });
-                  }
-                },
-                onDecrease: () {
-                  if (temperature > 16) {
-                    setState(() {
-                      temperature--;
-                    });
-                  }
-                },
-              ),
+             TemperatureControl(
+  temperature: temperature,
+
+  onIncrease: () async {
+    if (temperature < 30) {
+
+      setState(() {
+        temperature++;
+      });
+
+      await bluetoothService.sendCommand(
+        "TEMP:$temperature",
+      );
+    }
+  },
+
+  onDecrease: () async {
+    if (temperature > 16) {
+
+      setState(() {
+        temperature--;
+      });
+
+      await bluetoothService.sendCommand(
+        "TEMP:$temperature",
+      );
+    }
+  },
+),
 
               const SizedBox(height: 30),
 
-              SegmentSelector(
-                title: "Mode",
-                items: const [
-                  "COOL",
-                  "DRY",
-                  "FAN",
-                  "AUTO",
-                ],
-                selectedItem: mode,
-                onChanged: (value) {
-                  setState(() {
-                    mode = value;
-                  });
-                },
-              ),
+             SegmentSelector(
+  title: "Mode",
+  items: const [
+    "COOL",
+    "DRY",
+    "AUTO",
+  ],
+  selectedItem: mode,
+  onChanged: (value) async {
+
+    setState(() {
+
+      mode = value;
+
+      if (value == "AUTO") {
+        temperature = 25;
+      }
+
+      if (value == "DRY") {
+        fanSpeed = "LOW";
+      }
+
+    });
+
+    await bluetoothService.sendCommand("MODE:$value");
+  },
+),
 
               const SizedBox(height: 30),
 
 SegmentSelector(
   title: "Fan Speed",
   items: const [
-    "AUTO",
     "LOW",
     "MEDIUM",
     "HIGH",
   ],
   selectedItem: fanSpeed,
-  onChanged: (value) {
+  onChanged: (value) async {
+
+    // Ignore manual fan changes in AUTO mode
+    if (mode == "AUTO") return;
+
     setState(() {
       fanSpeed = value;
     });
+
+    await bluetoothService.sendCommand(
+      "FAN:$value",
+    );
   },
 ),
             ],
